@@ -1,0 +1,43 @@
+# Runtime state and logs
+logs/
+*.log
+helper.pid
+helper.lock
+registry-backup.json
+launch-hidden.vbs
+
+# Temporary and recorded media
+*.tmp
+*.wav
+*.m4a
+*.webm
+*.ogg
+temp/
+tmp/
+
+# Dependencies and downloaded third-party bundles
+node_modules/
+wppconnect-wa.js
+wppconnect-wa.js.LICENSE.txt
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+config.json
+cookies*
+session*
+profile/
+user-data/
+
+# Caches, debug output, and release artifacts
+cache/
+debug/
+dist/
+*.zip
+
+# Editors and Windows metadata
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini

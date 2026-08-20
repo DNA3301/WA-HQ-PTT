@@ -1,0 +1,8 @@
+{
+  "DebugPort": 9223,
+  "RecordBitrate": 128000,
+  "AacBitrate": "192k",
+  "SampleRate": 48000,
+  "MicOverlayPaddingPx": 2,
+  "MaxRecordingBytes": 67108864
+}
