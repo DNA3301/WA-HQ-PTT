@@ -22,6 +22,12 @@ The helper has not attached to the current WhatsApp WebView, or a WhatsApp updat
 
 If the log reports that WA-JS did not load or expose `WPP`, the installed WhatsApp build may be temporarily incompatible.
 
+## Cancelling a recording
+
+While the red recording indicator is visible, click the trash/cancel button or press **Escape**. The microphone stream is stopped, captured audio is discarded, and nothing is converted or sent.
+
+If the cancel control is not visible, completely restart WhatsApp and confirm that the installed `ui.js` reports version 2.0.1 in the helper log.
+
 ## Microphone permission denied
 
 Allow microphone access for desktop applications in Windows Settings under **Privacy & security > Microphone**, then restart WhatsApp. Also close applications that may be holding the microphone exclusively.

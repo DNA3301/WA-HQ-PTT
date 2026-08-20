@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fix WhatsApp Desktop Microphone &amp; Voice Quality | WA-HQ-PTT</title>
+  <meta name="description" content="Fix muffled, compressed or poor-quality WhatsApp Desktop voice messages on Windows with WA-HQ-PTT, a free open-source high-quality microphone recording workaround.">
+  <meta name="robots" content="index,follow">
+  <meta name="theme-color" content="#071b19">
+  <link rel="canonical" href="https://dna3301.github.io/WA-HQ-PTT/">
+  <link rel="stylesheet" href="styles.css">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="WA-HQ-PTT">
+  <meta property="og:title" content="Fix Poor WhatsApp Desktop Voice Message Quality on Windows">
+  <meta property="og:description" content="A free, open-source workaround for muffled, compressed or crackly WhatsApp Desktop voice messages on Windows.">
+  <meta property="og:url" content="https://dna3301.github.io/WA-HQ-PTT/">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="WA-HQ-PTT — Better WhatsApp Desktop Voice Messages">
+  <meta name="twitter:description" content="Clean local capture, automatic conversion and normal WhatsApp PTT sending on Windows.">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "WA-HQ-PTT",
+    "softwareVersion": "2.0.1",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Windows 10, Windows 11",
+    "description": "A free open-source workaround for muffled, compressed or poor-quality WhatsApp Desktop voice messages on Windows.",
+    "url": "https://dna3301.github.io/WA-HQ-PTT/",
+    "downloadUrl": "https://github.com/DNA3301/WA-HQ-PTT/releases/latest",
+    "codeRepository": "https://github.com/DNA3301/WA-HQ-PTT",
+    "license": "https://opensource.org/license/mit",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  }
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="shell nav-row">
+      <a class="brand" href="#top" aria-label="WA-HQ-PTT home">
+        <span class="brand-mark" aria-hidden="true">HQ</span>
+        <span>WA-HQ-PTT</span>
+      </a>
+      <nav aria-label="Main navigation">
+        <a href="#how-it-works">How it works</a>
+        <a href="#installation">Installation</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="shell hero-grid">
+        <div>
+          <p class="eyebrow">Free · Open source · Windows</p>
+          <h1>Fix Poor WhatsApp Desktop Voice Message Quality on Windows</h1>
+          <p class="lead">Does your microphone sound clean in Windows Sound Recorder, OBS or Discord, while WhatsApp Desktop voice messages sound muffled, compressed, crackly or like low-quality radio audio?</p>
+          <p>WA-HQ-PTT provides an alternate local capture and encoding pipeline while keeping the familiar WhatsApp voice-message workflow.</p>
+          <div class="actions">
+            <a class="button primary" href="https://github.com/DNA3301/WA-HQ-PTT/releases/latest">Download Latest Release</a>
+            <a class="button secondary" href="https://github.com/DNA3301/WA-HQ-PTT">View on GitHub</a>
+          </div>
+          <p class="release-note">Latest version: v2.0.1 · No separate HQ button</p>
+        </div>
+
+        <aside class="status-card" aria-label="Recording controls">
+          <div class="status-top">
+            <span class="pulse" aria-hidden="true"></span>
+            <strong>HQ recording</strong>
+            <span>00:18</span>
+          </div>
+          <div class="wave" aria-hidden="true">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="control-row">
+            <span class="cancel-control" aria-hidden="true">×</span>
+            <span>Cancel or press <kbd>Esc</kbd></span>
+          </div>
+          <p>Cancelled recordings are discarded and never sent.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section" id="problem">
+      <div class="shell narrow">
+        <p class="section-label">The problem</p>
+        <h2>One microphone, very different results</h2>
+        <p>Some Windows configurations produce clean microphone audio in other applications but noticeably degraded WhatsApp Desktop voice messages. The native voice-message result can sound more compressed, muffled or distorted even when the local capture itself is clean.</p>
+        <p>WA-HQ-PTT is a workaround for affected users. It does not claim that WhatsApp voice recording is poor for everyone, and it does not modify your microphone hardware.</p>
+      </div>
+    </section>
+
+    <section class="section process-section" id="how-it-works">
+      <div class="shell">
+        <p class="section-label">How it works</p>
+        <h2>A clean local path to a normal WhatsApp PTT</h2>
+        <div class="pipeline">
+          <div><strong>Microphone</strong><span>Normal input device</span></div>
+          <b aria-hidden="true">↓</b>
+          <div><strong>Clean local capture</strong><span>Unwanted processing requested off</span></div>
+          <b aria-hidden="true">↓</b>
+          <div><strong>WebM / Opus</strong><span>High-quality temporary recording</span></div>
+          <b aria-hidden="true">↓</b>
+          <div><strong>FFmpeg AAC / M4A</strong><span>Local conversion at 48 kHz</span></div>
+          <b aria-hidden="true">↓</b>
+          <div><strong>WA-JS</strong><span>Prepared as PTT</span></div>
+          <b aria-hidden="true">↓</b>
+          <div><strong>WhatsApp voice message</strong><span>Normal recipient experience</span></div>
+        </div>
+        <p class="fine-print">The pipeline was developed by comparing local captures with the resulting native voice messages on affected systems. The final prepared media is handed to WhatsApp using <code>sendFileMessage</code> with <code>isPtt: true</code>.</p>
+      </div>
+    </section>
+
+    <section class="section" id="features">
+      <div class="shell">
+        <p class="section-label">Features</p>
+        <h2>Keep the workflow, replace the problematic path</h2>
+        <div class="feature-grid">
+          <article>
+            <span class="number">01</span>
+            <h3>Normal microphone button</h3>
+            <p>Click the microphone already shown by WhatsApp. There is no separate HQ control to learn.</p>
+          </article>
+          <article>
+            <span class="number">02</span>
+            <h3>Automatic local processing</h3>
+            <p>Recording and FFmpeg conversion happen locally. No manual recording or file attachment is needed.</p>
+          </article>
+          <article>
+            <span class="number">03</span>
+            <h3>Real voice message/PTT</h3>
+            <p>The prepared AAC/M4A media is sent through WA-JS and appears as a normal WhatsApp voice message.</p>
+          </article>
+          <article>
+            <span class="number">04</span>
+            <h3>Safe cancellation</h3>
+            <p>Use the visible trash/cancel control or Escape. Cancelled audio is cleared without conversion or sending.</p>
+          </article>
+          <article>
+            <span class="number">05</span>
+            <h3>Automatic UI re-hooking</h3>
+            <p>The helper reattaches when WhatsApp rebuilds the composer interface and avoids duplicate handlers.</p>
+          </article>
+          <article>
+            <span class="number">06</span>
+            <h3>Free and open source</h3>
+            <p>The original project code is available under the MIT License. Donations are entirely optional.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section install-section" id="installation">
+      <div class="shell install-grid">
+        <div>
+          <p class="section-label">Installation</p>
+          <h2>Five simple steps</h2>
+          <ol class="steps">
+            <li><span>1</span><p><a href="https://github.com/DNA3301/WA-HQ-PTT/releases/latest">Download the latest release</a>.</p></li>
+            <li><span>2</span><p>Extract the ZIP completely.</p></li>
+            <li><span>3</span><p>Run <code>INSTALLA.cmd</code>.</p></li>
+            <li><span>4</span><p>Completely quit and restart WhatsApp Desktop.</p></li>
+            <li><span>5</span><p>Open a chat and use the normal microphone button.</p></li>
+          </ol>
+        </div>
+        <div class="usage-card">
+          <h3>Using WA-HQ-PTT</h3>
+          <p><strong>Start:</strong> click the microphone.</p>
+          <p><strong>Send:</strong> click it again.</p>
+          <p><strong>Cancel:</strong> click the trash/cancel button or press <kbd>Esc</kbd>.</p>
+          <hr>
+          <p>The installer checks FFmpeg and can install <code>Gyan.FFmpeg</code> with <code>winget</code>. WA-JS v4.6.0 is pinned and integrity-checked.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="shell narrow">
+        <p class="section-label">FAQ</p>
+        <h2>Common questions</h2>
+
+        <details>
+          <summary>Why does my microphone sound good in Windows but bad in WhatsApp Desktop?</summary>
+          <p>Applications can use different capture, processing and encoding paths. On some PCs, the WhatsApp voice-message path produces a more muffled or compressed result than other Windows applications.</p>
+        </details>
+        <details>
+          <summary>How do I fix muffled WhatsApp Desktop voice messages?</summary>
+          <p>WA-HQ-PTT captures clean audio locally, converts it with FFmpeg and sends the prepared audio as a normal WhatsApp PTT, bypassing the native recording path on affected systems.</p>
+        </details>
+        <details>
+          <summary>Does this improve the microphone itself?</summary>
+          <p>No. It changes the pipeline used for voice messages, not the hardware. Results still depend on your input device, Windows configuration and WhatsApp version.</p>
+        </details>
+        <details>
+          <summary>Does it work with USB microphones?</summary>
+          <p>It should work with ordinary microphones that Windows and the WhatsApp WebView2 environment can access, including common USB devices and audio interfaces.</p>
+        </details>
+        <details>
+          <summary>Are recordings uploaded to another server?</summary>
+          <p>Recording and conversion occur locally. WA-HQ-PTT does not intentionally upload audio to its own server; the finished media is handed to WhatsApp for normal delivery.</p>
+        </details>
+        <details>
+          <summary>How do I cancel a voice message?</summary>
+          <p>Click the visible trash/cancel button or press Escape while recording. The captured data is cleared and is never converted or sent.</p>
+        </details>
+        <details>
+          <summary>Is this official WhatsApp software?</summary>
+          <p>No. WA-HQ-PTT is an unofficial community project and is not affiliated with WhatsApp or Meta.</p>
+        </details>
+      </div>
+    </section>
+
+    <section class="section muted-section" id="italiano" lang="it">
+      <div class="shell narrow">
+        <p class="section-label">In italiano</p>
+        <h2>Vocali WhatsApp Desktop ovattati o compressi?</h2>
+        <p>Se il microfono su WhatsApp PC si sente male, gracchia o sembra molto più compresso rispetto ad altre applicazioni, WA-HQ-PTT offre un percorso di registrazione locale alternativo. Usa il normale pulsante microfono e invia un vero vocale/PTT.</p>
+        <p>Per annullare un vocale, premi il pulsante cestino/annulla oppure <strong>Esc</strong>. Una registrazione annullata non viene convertita né inviata.</p>
+      </div>
+    </section>
+
+    <section class="section" id="privacy">
+      <div class="shell two-columns">
+        <div>
+          <p class="section-label">Privacy</p>
+          <h2>Local by design</h2>
+          <p>Microphone capture, temporary recording and FFmpeg conversion occur locally. WA-HQ-PTT does not intentionally upload recordings to its own server. Temporary helper-created media is cleaned after processing or cancellation, and the final media is handed to WhatsApp for normal message delivery.</p>
+        </div>
+        <div id="disclaimer">
+          <p class="section-label">Disclaimer</p>
+          <h2>Unofficial project</h2>
+          <p>WA-HQ-PTT is not affiliated with, endorsed by, or sponsored by WhatsApp or Meta. WhatsApp Desktop/Web internals may change and future updates may temporarily break compatibility. Use the software at your own risk.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section support-section" id="support">
+      <div class="shell narrow">
+        <p class="section-label">Support / Donations</p>
+        <h2>Free means free</h2>
+        <p>WA-HQ-PTT is free and open source. If it fixed your WhatsApp Desktop voice-message quality and you would like to support development, donations are completely optional.</p>
+        <p class="wallet"><span>EVM-compatible wallet</span><code>0x9FAA94cE4eD7A2d38F45D711694C6EC2E49ad99a</code></p>
+        <p class="fine-print">Only send assets using an EVM-compatible network supported by your wallet. Always verify network compatibility before sending funds. Donations never unlock features and are not requested during installation.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell footer-row">
+      <p>WA-HQ-PTT · MIT License · 2026 DNA3301</p>
+      <p><a href="https://github.com/DNA3301/WA-HQ-PTT">Source code</a> · <a href="https://github.com/wppconnect-team/wa-js">WA-JS upstream</a></p>
+    </div>
+  </footer>
+</body>
+</html>

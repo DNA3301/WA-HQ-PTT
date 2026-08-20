@@ -78,7 +78,7 @@ function Merge-DefaultConfig([string]$DefaultPath, [string]$UserPath) {
 
 try {
     Write-Host ""
-    Write-Host "WA-HQ-PTT v2.0.0 - INSTALLATION"
+    Write-Host "WA-HQ-PTT v2.0.1 - INSTALLATION"
     Write-Host "================================"
     Write-Host ""
 
@@ -188,6 +188,7 @@ sh.Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -F
     Write-Host ""
     Write-Host "Completely quit WhatsApp Desktop, then reopen it."
     Write-Host "Use the normal WhatsApp microphone button to start and stop HQ recording."
+    Write-Host "While recording, click the cancel button or press Escape to discard it."
     Write-Host "Log: $AppDir\logs\helper.log"
 } catch {
     Write-Host ""

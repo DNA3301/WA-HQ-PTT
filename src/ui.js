@@ -1,5 +1,5 @@
 (() => {
-    const VERSION = "2.0.0";
+    const VERSION = "2.0.1";
     const cfg = window.__WAHQ_CONFIG__ || {};
 
     if (window.__WAHQ && window.__WAHQ.version === VERSION) {
@@ -24,8 +24,10 @@
         nativeMic: null,
         overlay: null,
         status: null,
+        cancel: null,
         observer: null,
         positionTimer: null,
+        timeouts: new Set(),
         lastMicRect: null,
         booted: false
     };
@@ -37,7 +39,7 @@
         } catch (e) {
             console.error("WA HQ bridge error", e);
             setStatus("error", "Helper not connected");
-            setTimeout(() => {
+            scheduleUi(() => {
                 if (state.mode === "error") setStatus("idle");
             }, 4000);
             return false;
@@ -54,6 +56,15 @@
     }
 
     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    function scheduleUi(callback, ms) {
+        const id = setTimeout(() => {
+            state.timeouts.delete(id);
+            if (state.booted) callback();
+        }, ms);
+        state.timeouts.add(id);
+        return id;
+    }
 
     function makeSession() {
         if (globalThis.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -276,19 +287,63 @@
             document.body.appendChild(status);
             state.status = status;
         }
+
+        if (!state.cancel || !state.cancel.isConnected) {
+            const cancel = document.createElement("button");
+            cancel.id = "wa-hq-cancel";
+            cancel.type = "button";
+            cancel.title = "Cancel recording (Esc)";
+            cancel.setAttribute("aria-label", "Cancel recording");
+            cancel.style.cssText = [
+                "position:fixed",
+                "z-index:2147483647",
+                "display:none",
+                "align-items:center",
+                "justify-content:center",
+                "width:38px",
+                "height:38px",
+                "margin:0",
+                "padding:0",
+                "border:0",
+                "border-radius:999px",
+                "background:rgba(239,68,68,.96)",
+                "color:white",
+                "box-shadow:0 2px 12px rgba(0,0,0,.35)",
+                "cursor:pointer",
+                "touch-action:manipulation"
+            ].join(";");
+            cancel.innerHTML = [
+                '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">',
+                '<path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2Zm-2 6h10l-1 11H8L7 9Zm3 2v7h2v-7h-2Zm4 0v7h2v-7h-2Z"/>',
+                "</svg>"
+            ].join("");
+            cancel.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                cancelRecording();
+            }, true);
+            cancel.addEventListener("dblclick", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            }, true);
+            document.body.appendChild(cancel);
+            state.cancel = cancel;
+        }
     }
 
     function positionUi() {
         ensureUi();
         const overlay = state.overlay;
         const status = state.status;
-        if (!overlay || !status) return;
+        const cancel = state.cancel;
+        if (!overlay || !status || !cancel) return;
 
         const mic = findNativeMicButton();
         state.nativeMic = mic;
 
         if (!mic || !isVisible(mic)) {
             overlay.style.display = "none";
+            cancel.style.display = "none";
             if (state.mode === "idle") status.style.display = "none";
             state.lastMicRect = null;
             return;
@@ -333,6 +388,17 @@
         const sy = Math.max(8, r.top + (r.height - sr.height) / 2);
         status.style.left = `${sx}px`;
         status.style.top = `${sy}px`;
+
+        if (state.mode === "recording") {
+            const cancelGap = 10;
+            const cancelLeft = Math.max(8, sx - 38 - cancelGap);
+            const cancelTop = Math.max(8, r.top + (r.height - 38) / 2);
+            cancel.style.left = `${cancelLeft}px`;
+            cancel.style.top = `${cancelTop}px`;
+            cancel.style.display = "flex";
+        } else {
+            cancel.style.display = "none";
+        }
 
         state.lastMicRect = { left: r.left, top: r.top, width: r.width, height: r.height };
     }
@@ -391,7 +457,7 @@
             const chat = WPP.chat.getActiveChat();
             if (!chat) {
                 setStatus("error", "Open a chat first");
-                setTimeout(() => setStatus("idle"), 2500);
+                scheduleUi(() => setStatus("idle"), 2500);
                 return;
             }
 
@@ -441,13 +507,22 @@
             recorder.onerror = event => {
                 const error = event?.error || new Error("MediaRecorder failed");
                 console.error("WA HQ recorder error", error);
-                try { state.stream?.getTracks().forEach(track => track.stop()); } catch (_) {}
+                stopTimer();
+                try {
+                    recorder.ondataavailable = null;
+                    recorder.onstop = null;
+                    recorder.onerror = null;
+                    if (recorder.state !== "inactive") recorder.stop();
+                } catch (_) {}
+                try { stream.getTracks().forEach(track => track.stop()); } catch (_) {}
                 state.stream = null;
                 state.recorder = null;
                 state.chunks = [];
+                state.session = null;
+                state.chatId = null;
                 reportClientError("recorder", error);
                 setStatus("error", "Recording failed");
-                setTimeout(() => {
+                scheduleUi(() => {
                     if (state.mode === "error") setStatus("idle");
                 }, 4000);
             };
@@ -457,10 +532,20 @@
             startTimer();
         } catch (e) {
             console.error("WA HQ start error", e);
+            try {
+                if (state.recorder) {
+                    state.recorder.ondataavailable = null;
+                    state.recorder.onstop = null;
+                    state.recorder.onerror = null;
+                    if (state.recorder.state !== "inactive") state.recorder.stop();
+                }
+            } catch (_) {}
             try { state.stream?.getTracks().forEach(t => t.stop()); } catch (_) {}
             state.stream = null;
             state.recorder = null;
             state.chunks = [];
+            state.session = null;
+            state.chatId = null;
 
             let message = "Microphone unavailable";
             if (e?.name === "NotAllowedError" || e?.name === "SecurityError") {
@@ -477,7 +562,7 @@
 
             reportClientError("microphone", e);
             setStatus("error", message);
-            setTimeout(() => setStatus("idle"), 3500);
+            scheduleUi(() => setStatus("idle"), 3500);
         }
     }
 
@@ -541,8 +626,51 @@
             console.error("WA HQ upload error", e);
             reportClientError("upload", e);
             setStatus("error", "Audio preparation failed");
-            setTimeout(() => setStatus("idle"), 3500);
+            scheduleUi(() => setStatus("idle"), 3500);
         }
+    }
+
+    function cancelRecording() {
+        if (state.mode !== "recording") return;
+
+        // Cambia stato prima di fermare MediaRecorder: un secondo click o Esc non puo
+        // entrare nel percorso di conversione/invio mentre l'annullamento e in corso.
+        state.mode = "cancelling";
+        stopTimer();
+
+        const recorder = state.recorder;
+        const stream = state.stream;
+        state.recorder = null;
+        state.stream = null;
+
+        if (state.cancel) state.cancel.style.display = "none";
+
+        try {
+            if (recorder) {
+                recorder.ondataavailable = null;
+                recorder.onstop = null;
+                recorder.onerror = null;
+                if (recorder.state !== "inactive") recorder.stop();
+            }
+        } catch (_) {}
+
+        try { stream?.getTracks().forEach(track => track.stop()); } catch (_) {}
+
+        state.chunks = [];
+        state.session = null;
+        state.chatId = null;
+        state.startedAt = 0;
+        setStatus("idle", "Cancelled");
+        scheduleUi(() => {
+            if (state.mode === "idle") setStatus("idle");
+        }, 1200);
+    }
+
+    function onKeyDown(event) {
+        if (state.mode !== "recording" || event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        cancelRecording();
     }
 
     async function toggle() {
@@ -580,15 +708,17 @@
             state.session = null;
             state.chatId = null;
             setStatus("idle", "Sent");
-            setTimeout(() => {
+            scheduleUi(() => {
                 if (state.mode === "idle") setStatus("idle");
             }, 1400);
         } catch (e) {
             console.error("WA HQ send error", e);
             delete state.nativeParts[session];
+            state.session = null;
+            state.chatId = null;
             reportClientError("send", e);
             setStatus("error", "Send failed");
-            setTimeout(() => setStatus("idle"), 4000);
+            scheduleUi(() => setStatus("idle"), 4000);
         }
     }
 
@@ -598,7 +728,7 @@
         state.session = null;
         state.chatId = null;
         setStatus("error", String(message || "Helper error").slice(0, 80));
-        setTimeout(() => setStatus("idle"), 5000);
+        scheduleUi(() => setStatus("idle"), 5000);
     }
 
     function ensureMicHook() {
@@ -639,29 +769,46 @@
 
         window.addEventListener("resize", positionUi, { passive: true });
         window.addEventListener("scroll", positionUi, { passive: true, capture: true });
+        window.addEventListener("keydown", onKeyDown, true);
         window.addEventListener("pagehide", destroy, { once: true });
     }
 
     function destroy() {
+        state.mode = "destroying";
         stopTimer();
         try {
-            if (state.recorder && state.recorder.state !== "inactive") state.recorder.stop();
+            if (state.recorder) {
+                state.recorder.ondataavailable = null;
+                state.recorder.onstop = null;
+                state.recorder.onerror = null;
+                if (state.recorder.state !== "inactive") state.recorder.stop();
+            }
         } catch (_) {}
         try { state.stream?.getTracks().forEach(track => track.stop()); } catch (_) {}
         state.stream = null;
         state.recorder = null;
         state.chunks = [];
+        state.session = null;
+        state.chatId = null;
+        state.startedAt = 0;
         state.nativeParts = Object.create(null);
         state.observer?.disconnect();
         state.observer = null;
         if (state.positionTimer) clearInterval(state.positionTimer);
         state.positionTimer = null;
+        for (const timeout of state.timeouts) clearTimeout(timeout);
+        state.timeouts.clear();
         window.removeEventListener("resize", positionUi);
         window.removeEventListener("scroll", positionUi, true);
+        window.removeEventListener("keydown", onKeyDown, true);
+        window.removeEventListener("pagehide", destroy);
         state.overlay?.remove();
         state.status?.remove();
+        state.cancel?.remove();
         state.overlay = null;
         state.status = null;
+        state.cancel = null;
+        state.mode = "idle";
         state.booted = false;
     }
 
@@ -673,6 +820,7 @@
         nativeFinish,
         nativeFail,
         setStatus,
+        cancelRecording,
         destroy
     };
 

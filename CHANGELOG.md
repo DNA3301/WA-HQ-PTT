@@ -2,6 +2,14 @@
 
 All notable changes to WA-HQ-PTT are documented here.
 
+## v2.0.1 - 2026-08-20
+
+- Added a visible cancel button during HQ recording
+- Escape key now cancels the active recording
+- Cancelled recordings are discarded immediately
+- Cancelled recordings are never converted or sent
+- Microphone streams and temporary recording data are cleaned after cancellation
+
 ## v2.0.0 - 2026-08-20
 
 - Replaced the separate HQ button with interception of WhatsApp's native microphone button.
