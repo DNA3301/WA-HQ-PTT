@@ -2,6 +2,14 @@
 
 All notable changes to WA-HQ-PTT are documented here.
 
+## v2.0.3 - 2026-09-25
+
+- Fixed a compatibility case where OGG/Opus PTT messages could play correctly on Android but be silent on WhatsApp for iOS.
+- Replaced WebM/Opus stream-copy remuxing with a canonical Opus re-encode for outgoing PTT audio.
+- Normalized outgoing voice notes to OGG/Opus, 48 kHz, mono, 20 ms frames, with regenerated timestamps starting at zero.
+- Kept `audio/ogg; codecs=opus`, `isPtt: true`, waveform support, and the existing HQ recording UI.
+- Kept 128 kbps Opus as the default recording/output bitrate for high speech quality.
+
 ## v2.0.1 - 2026-08-20
 
 - Added a visible cancel button during HQ recording
