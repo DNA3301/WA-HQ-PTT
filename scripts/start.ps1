@@ -43,35 +43,34 @@ try {
         throw "Missing ui.js: $UiPath. Run INSTALLA.cmd again."
     }
 
-    # v2.0.4 iOS compatibility path:
-    # - final filename uses .opus (Ogg/Opus container)
-    # - no WA-JS precomputed waveform/duration override
-    # - wait for the media send acknowledgement before reporting success
-    $newNativeFinish = @'
+    # Restore the last known-good HQ UI/recording path. Do not alter recorder behaviour.
+    $ui = [System.IO.File]::ReadAllText($UiPath, [System.Text.Encoding]::UTF8)
+    if ($ui.Contains('const VERSION = "2.0.1";')) {
+        $ui = Replace-Once $ui 'const VERSION = "2.0.1";' 'const VERSION = "2.0.2";' "ui-version"
+
+        $newNativeFinish = @'
     async function nativeFinish(session, chatId) {
         try {
             const parts = state.nativeParts[session];
-            if (!parts || !parts.length) throw new Error("No Opus data");
+            if (!parts || !parts.length) throw new Error("No OGG data");
 
             setStatus("sending", "Sending HQ voice message...");
-            const file = new File(parts, `WA-HQ-${Date.now()}.opus`, { type: "audio/ogg; codecs=opus" });
+            const file = new File(parts, `WA-HQ-${Date.now()}.ogg`, { type: "audio/ogg; codecs=opus" });
             delete state.nativeParts[session];
 
             await WPP.chat.sendFileMessage(chatId, file, {
                 type: "audio",
                 isPtt: true,
-                filename: file.name,
                 mimetype: "audio/ogg; codecs=opus",
-                waveform: false,
-                waitForAck: true
+                waveform: true
             });
 
             state.session = null;
             state.chatId = null;
-            setStatus("idle", "Sent - iOS compat v2.0.4");
+            setStatus("idle", "Sent");
             scheduleUi(() => {
                 if (state.mode === "idle") setStatus("idle");
-            }, 1800);
+            }, 1400);
         } catch (e) {
             console.error("WA HQ send error", e);
             delete state.nativeParts[session];
@@ -83,25 +82,15 @@ try {
         }
     }
 '@
-
-    $ui = [System.IO.File]::ReadAllText($UiPath, [System.Text.Encoding]::UTF8)
-    if ($ui.Contains('const VERSION = "2.0.1";')) {
-        $ui = Replace-Once $ui 'const VERSION = "2.0.1";' 'const VERSION = "2.0.4";' "ui-version-201"
-        $ui = Replace-Function $ui '    async function nativeFinish(session, chatId) {' '    function nativeFail(message) {' $newNativeFinish "nativeFinish-201"
+        $ui = Replace-Function $ui '    async function nativeFinish(session, chatId) {' '    function nativeFail(message) {' $newNativeFinish "nativeFinish"
         [System.IO.File]::WriteAllText($UiPath, $ui, [System.Text.UTF8Encoding]::new($false))
-        Write-BootstrapLog "Patched ui.js from v2.0.1 to v2.0.4 iOS-compatible Opus PTT"
-    } elseif ($ui.Contains('const VERSION = "2.0.2";')) {
-        $ui = Replace-Once $ui 'const VERSION = "2.0.2";' 'const VERSION = "2.0.4";' "ui-version-202"
-        $ui = Replace-Function $ui '    async function nativeFinish(session, chatId) {' '    function nativeFail(message) {' $newNativeFinish "nativeFinish-202"
-        [System.IO.File]::WriteAllText($UiPath, $ui, [System.Text.UTF8Encoding]::new($false))
-        Write-BootstrapLog "Upgraded ui.js from v2.0.2 to v2.0.4 iOS-compatible Opus PTT"
-    } elseif (-not ($ui.Contains('const VERSION = "2.0.4";') -and $ui.Contains('.opus`') -and $ui.Contains('waveform: false'))) {
-        throw "Unsupported ui.js version; refusing to apply the iOS PTT compatibility patch"
+        Write-BootstrapLog "Restored known-good HQ UI/runtime v2.0.3"
+    } elseif (-not ($ui.Contains('const VERSION = "2.0.2";') -and $ui.Contains('audio/ogg; codecs=opus') -and $ui.Contains('waveform: true'))) {
+        throw "Unsupported ui.js version; reinstall from the complete package to restore HQ mode"
     }
 
     $core = [System.IO.File]::ReadAllText($CorePath, [System.Text.Encoding]::UTF8)
 
-    # Keep removing old M4A leftovers as well, but add the OGG temp files.
     $core = Replace-Once $core '@(".webm", ".m4a")' '@(".webm", ".ogg", ".m4a")' "stale-temp-extensions"
 
     $newConvert = @'
@@ -113,12 +102,9 @@ function Convert-And-Send($Upload) {
             $Upload.Stream = $null
         }
 
-        Set-NativeStatus "processing" "Encoding WhatsApp-native Opus..."
-        Write-Log "Normalizing $($Upload.WebmPath) -> $($Upload.OggPath) as Opus 48 kHz mono 64k VOIP"
+        Set-NativeStatus "processing" "Encoding HQ OGG/Opus..."
+        Write-Log "Encoding $($Upload.WebmPath) -> $($Upload.OggPath) as HQ Opus 48 kHz mono"
 
-        # Match the shape used by interoperable WhatsApp voice-note pipelines:
-        # Ogg container + Opus, 48 kHz, mono, speech/VOIP mode, 20 ms frames.
-        # Always re-encode so Chromium WebM packet timing/headers cannot leak through.
         Remove-Item -LiteralPath $Upload.OggPath -Force -ErrorAction SilentlyContinue
         $encodeArgs = @(
             "-hide_banner",
@@ -129,10 +115,10 @@ function Convert-And-Send($Upload) {
             "-map", "0:a:0",
             "-af", "aresample=async=1:first_pts=0",
             "-c:a", "libopus",
-            "-b:a", "64k",
+            "-b:a", [string]$script:config.RecordBitrate,
             "-ar", "48000",
             "-ac", "1",
-            "-application", "voip",
+            "-application", "audio",
             "-frame_duration", "20",
             "-vbr", "on",
             "-compression_level", "10",
@@ -143,19 +129,13 @@ function Convert-And-Send($Upload) {
         $encodeOutput = & $script:ffmpeg @encodeArgs 2>&1
         $encodeExitCode = $LASTEXITCODE
         if ($encodeExitCode -ne 0 -or -not (Test-Path -LiteralPath $Upload.OggPath)) {
-            throw "FFmpeg WhatsApp Opus exit $encodeExitCode - $($encodeOutput -join ' ')"
+            throw "FFmpeg HQ OGG/Opus exit $encodeExitCode - $($encodeOutput -join ' ')"
         }
 
         $bytes = [System.IO.File]::ReadAllBytes($Upload.OggPath)
         if (-not $bytes -or $bytes.Length -lt 100) { throw "Converted OGG/Opus is empty" }
 
-        $signature = [System.Text.Encoding]::ASCII.GetString($bytes, 0, [Math]::Min(4, $bytes.Length))
-        $headerProbe = [System.Text.Encoding]::ASCII.GetString($bytes, 0, [Math]::Min(256, $bytes.Length))
-        if ($signature -ne "OggS" -or -not $headerProbe.Contains("OpusHead")) {
-            throw "Converted audio is not a valid Ogg/Opus stream"
-        }
-
-        Write-Log "iOS-compatible OGG/Opus ready: $($bytes.Length) bytes; signature=OggS; codec=Opus"
+        Write-Log "HQ OGG/Opus ready: $($bytes.Length) bytes"
         Set-NativeStatus "sending" "Sending HQ voice message..."
 
         $sessionJs = Js-String $Upload.Session
@@ -173,7 +153,7 @@ function Convert-And-Send($Upload) {
         }
 
         Invoke-JsNoWait "window.__WAHQ && window.__WAHQ.nativeFinish($sessionJs,$chatJs);"
-        Write-Log "Canonical Opus transferred back to page for WPP PTT send"
+        Write-Log "HQ OGG/Opus transferred back to page for WPP send"
     } catch {
         Write-Log "Audio conversion/transfer failed: $($_.Exception.Message)"
         Fail-Native "Audio conversion failed. See helper.log."
@@ -189,7 +169,7 @@ function Convert-And-Send($Upload) {
     $core = Replace-Once $core 'Remove-Item $webm, $m4a -Force -ErrorAction SilentlyContinue' 'Remove-Item $webm, $ogg -Force -ErrorAction SilentlyContinue' "ogg-temp-remove"
     $core = Replace-Once $core 'OggPath = $m4a' 'OggPath = $ogg' "ogg-upload-property"
 
-    Write-BootstrapLog "Starting patched PTT runtime v2.0.4 (Ogg/Opus 48 kHz mono 64k VOIP, native media prep)"
+    Write-BootstrapLog "Starting restored HQ runtime v2.0.3-compatible (128k default, 48 kHz mono)"
     & ([ScriptBlock]::Create($core))
 } catch {
     Write-BootstrapLog "FATAL: $($_.Exception.Message)"
