@@ -45,6 +45,7 @@ try {
 
     # Patch the installed UI once. The source file stays pinned to the tested 2.0.1 core,
     # while the runtime file becomes 2.0.2 and sends a genuine OGG/Opus PTT.
+    # Backend compatibility revision: v2.0.3 normalizes Opus for Android + iOS.
     $ui = [System.IO.File]::ReadAllText($UiPath, [System.Text.Encoding]::UTF8)
     if ($ui.Contains('const VERSION = "2.0.1";')) {
         $ui = Replace-Once $ui 'const VERSION = "2.0.1";' 'const VERSION = "2.0.2";' "ui-version"
@@ -104,50 +105,37 @@ function Convert-And-Send($Upload) {
             $Upload.Stream = $null
         }
 
-        Set-NativeStatus "processing" "Packaging OGG/Opus..."
-        Write-Log "Remuxing $($Upload.WebmPath) -> $($Upload.OggPath)"
+        Set-NativeStatus "processing" "Encoding iOS-safe OGG/Opus..."
+        Write-Log "Normalizing $($Upload.WebmPath) -> $($Upload.OggPath) as Opus 48 kHz mono"
 
+        # Do not stream-copy the browser Opus bitstream. Android accepts that form,
+        # but iOS WhatsApp can receive a PTT that is present yet silent. Re-encoding
+        # rebuilds the Opus headers/timestamps and forces the native voice-note shape.
         Remove-Item -LiteralPath $Upload.OggPath -Force -ErrorAction SilentlyContinue
-        $copyArgs = @(
+        $encodeArgs = @(
             "-hide_banner",
             "-loglevel", "error",
             "-y",
             "-i", $Upload.WebmPath,
             "-vn",
             "-map", "0:a:0",
-            "-c:a", "copy",
+            "-af", "aresample=async=1:first_pts=0",
+            "-c:a", "libopus",
+            "-b:a", [string]$script:config.RecordBitrate,
+            "-ar", "48000",
+            "-ac", "1",
+            "-application", "audio",
+            "-frame_duration", "20",
+            "-vbr", "on",
+            "-compression_level", "10",
             "-f", "ogg",
             $Upload.OggPath
         )
 
-        $copyOutput = & $script:ffmpeg @copyArgs 2>&1
-        $copyExitCode = $LASTEXITCODE
-
-        if ($copyExitCode -ne 0 -or -not (Test-Path -LiteralPath $Upload.OggPath)) {
-            Write-Log "Opus stream-copy remux failed (exit $copyExitCode); falling back to libopus: $($copyOutput -join ' ')"
-            Remove-Item -LiteralPath $Upload.OggPath -Force -ErrorAction SilentlyContinue
-
-            $fallbackArgs = @(
-                "-hide_banner",
-                "-loglevel", "error",
-                "-y",
-                "-i", $Upload.WebmPath,
-                "-vn",
-                "-map", "0:a:0",
-                "-c:a", "libopus",
-                "-b:a", [string]$script:config.RecordBitrate,
-                "-ar", [string]$script:config.SampleRate,
-                "-vbr", "on",
-                "-compression_level", "10",
-                "-f", "ogg",
-                $Upload.OggPath
-            )
-
-            $fallbackOutput = & $script:ffmpeg @fallbackArgs 2>&1
-            $fallbackExitCode = $LASTEXITCODE
-            if ($fallbackExitCode -ne 0 -or -not (Test-Path -LiteralPath $Upload.OggPath)) {
-                throw "FFmpeg OGG/Opus exit $fallbackExitCode - $($fallbackOutput -join ' ')"
-            }
+        $encodeOutput = & $script:ffmpeg @encodeArgs 2>&1
+        $encodeExitCode = $LASTEXITCODE
+        if ($encodeExitCode -ne 0 -or -not (Test-Path -LiteralPath $Upload.OggPath)) {
+            throw "FFmpeg canonical OGG/Opus exit $encodeExitCode - $($encodeOutput -join ' ')"
         }
 
         $bytes = [System.IO.File]::ReadAllBytes($Upload.OggPath)
@@ -187,7 +175,7 @@ function Convert-And-Send($Upload) {
     $core = Replace-Once $core 'Remove-Item $webm, $m4a -Force -ErrorAction SilentlyContinue' 'Remove-Item $webm, $ogg -Force -ErrorAction SilentlyContinue' "ogg-temp-remove"
     $core = Replace-Once $core 'OggPath = $m4a' 'OggPath = $ogg' "ogg-upload-property"
 
-    Write-BootstrapLog "Starting patched OGG/Opus runtime"
+    Write-BootstrapLog "Starting patched OGG/Opus runtime v2.0.3 (48 kHz mono canonical encode)"
     & ([ScriptBlock]::Create($core))
 } catch {
     Write-BootstrapLog "FATAL: $($_.Exception.Message)"
