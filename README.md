@@ -2,25 +2,43 @@
 
 ## Fix poor, muffled or compressed WhatsApp Desktop voice-message quality on Windows
 
-Some Windows users find that their microphone sounds clean in Windows Sound Recorder, OBS, Discord or other applications, but WhatsApp Desktop voice messages sound muffled, heavily compressed, crackly, or like low-quality radio audio.
+WA-HQ-PTT is a free, open-source workaround for Windows users whose microphone sounds clean in Windows Sound Recorder, OBS, Discord or other applications but noticeably worse in WhatsApp Desktop voice messages.
 
-WA-HQ-PTT is a free, open-source workaround for those users. It bypasses the problematic voice-message recording and encoding path with a clean local recording pipeline while preserving the normal WhatsApp PTT experience. It does not claim that every WhatsApp Desktop installation has this issue.
+The project keeps the familiar WhatsApp voice-message workflow while replacing the problematic recording/encoding path with a local HQ pipeline.
 
-[Download the latest release](https://github.com/DNA3301/WA-HQ-PTT/releases/latest) · [Project website](https://dna3301.github.io/WA-HQ-PTT/)
+**Current validated version: v2.0.5**
+
+[Download current v2.0.5 source ZIP](https://github.com/DNA3301/WA-HQ-PTT/archive/refs/heads/main.zip) · [Project website](https://dna3301.github.io/WA-HQ-PTT/) · [Repository](https://github.com/DNA3301/WA-HQ-PTT)
+
+## What is fixed in v2.0.5
+
+- HQ recording remains active on Android recipients instead of falling back to WhatsApp's lower-quality native recording path.
+- Voice notes are sent as canonical OGG/Opus PTT media at 48 kHz mono with a 128 kbps default bitrate.
+- Recipient playback-speed controls remain usable at 1x / 1.5x / 2x.
+- Silent playback on WhatsApp for iOS was fixed by moving the compatibility change to the WA-JS media layer instead of degrading the audio profile.
+- The validated WA-JS nightly build from 2026-09-24 is pinned by SHA-256.
+
+The final v2.0.5 path was verified on real Android and iPhone recipients before being promoted to `main`.
 
 ## Features
 
-- Uses WhatsApp's normal microphone button
-- No separate HQ button
-- Clean local microphone recording
-- Automatic AAC/M4A conversion
-- Sends as a normal WhatsApp voice message/PTT
-- Cancel button during recording
-- Escape key cancels recording
-- No manual audio attachment required
-- Automatic re-hooking after WhatsApp UI changes
-- Local audio processing
-- Free and open source
+- Uses the normal WhatsApp microphone button through a transparent HQ overlay.
+- No separate permanent HQ button.
+- Clean local microphone capture.
+- Browser echo cancellation requested off.
+- Browser noise suppression requested off.
+- Browser automatic gain control requested off.
+- High-quality WebM/Opus capture.
+- Canonical OGG/Opus output at 48 kHz mono.
+- 128 kbps default Opus bitrate.
+- Sends as a normal WhatsApp voice message/PTT.
+- Waveform support.
+- Recipient 1x / 1.5x / 2x playback-speed support.
+- Cancel button during recording.
+- Escape key cancels recording.
+- Automatic re-hooking after WhatsApp UI changes.
+- Local processing; no project-owned audio upload service.
+- Free and open source.
 
 ## How it works
 
@@ -31,41 +49,53 @@ Clean local capture
     ↓
 High-quality WebM/Opus recording
     ↓
-FFmpeg AAC/M4A conversion
+FFmpeg canonical OGG/Opus encode
+48 kHz · mono · 20 ms frames · 128 kbps default
     ↓
-WA-JS
+Pinned WA-JS media pipeline
     ↓
 WhatsApp PTT
 ```
 
-The issue was isolated by comparing audio captured locally with audio produced after the normal WhatsApp voice-message path. On affected configurations, the local recording can be clean while the final native voice message is noticeably more compressed or distorted.
+WA-HQ-PTT intercepts the normal microphone control with a transparent overlay and records with `getUserMedia`. It requests echo cancellation, noise suppression and automatic gain control to be disabled, then records Opus locally.
 
-WA-HQ-PTT intercepts the normal microphone button and asks `getUserMedia` to disable echo cancellation, noise suppression and automatic gain control. It records high-quality WebM/Opus locally, converts it with FFmpeg to AAC/M4A at 48 kHz, and gives the prepared media to `@wppconnect/wa-js` using:
+The recording is normalized by FFmpeg into a WhatsApp-friendly OGG/Opus voice-note stream. The prepared file is handed to WA-JS using the PTT path:
 
 ```javascript
-sendFileMessage(chatId, file, {
+WPP.chat.sendFileMessage(chatId, file, {
     type: "audio",
-    isPtt: true
+    isPtt: true,
+    mimetype: "audio/ogg; codecs=opus",
+    waveform: true
 })
 ```
 
-The recipient receives a normal WhatsApp voice message/PTT. There is no need to record first with Windows Sound Recorder or attach an audio file manually.
+The current compatibility build uses the WA-JS nightly generated on 2026-09-24 from upstream commit `744e3d809f046059744f3cee035eed2bc516d6cd`.
+
+Pinned bundle SHA-256:
+
+```text
+624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC
+```
 
 ## Installation
 
-1. [Download the latest release](https://github.com/DNA3301/WA-HQ-PTT/releases/latest).
+1. [Download the current main ZIP](https://github.com/DNA3301/WA-HQ-PTT/archive/refs/heads/main.zip).
 2. Extract the ZIP completely.
 3. Run `INSTALLA.cmd`.
-4. Completely quit and restart WhatsApp Desktop.
-5. Use the normal microphone button.
+4. Completely quit WhatsApp Desktop, including the tray process.
+5. Reopen WhatsApp Desktop.
+6. Open a chat and use the normal microphone button.
+
+When WA-HQ-PTT is attached correctly, the normal microphone remains visible but the custom HQ overlay handles the click. During recording you will see the WA-HQ-PTT recording status and the cancel control.
 
 ### Requirements
 
-- Windows 10 or Windows 11
-- The WebView2-based WhatsApp Desktop app
-- Windows PowerShell 5.1 or newer
-- Internet access during installation to download the pinned WA-JS bundle
-- FFmpeg
+- Windows 10 or Windows 11.
+- WebView2-based WhatsApp Desktop.
+- Windows PowerShell 5.1 or newer.
+- Internet access during installation to download the pinned WA-JS bundle.
+- FFmpeg.
 
 The installer checks `ffmpeg -version`. If FFmpeg is missing, it attempts:
 
@@ -73,50 +103,85 @@ The installer checks `ffmpeg -version`. If FFmpeg is missing, it attempts:
 winget install --id Gyan.FFmpeg -e --accept-package-agreements --accept-source-agreements
 ```
 
-If `winget` is unavailable, the installer explains that FFmpeg must be installed manually and made available on `PATH` before running `INSTALLA.cmd` again. WA-HQ-PTT itself normally does not require administrator permission; the FFmpeg package installer may show its own prompt.
+If `winget` is unavailable, install FFmpeg manually, make sure `ffmpeg.exe` is available on `PATH`, then run `INSTALLA.cmd` again.
 
 ## Usage
 
 1. Open a WhatsApp chat.
 2. Click the normal microphone button.
 3. Speak.
-4. To send, click the microphone again.
+4. Click the microphone again to send.
 5. To cancel, click the trash/cancel button or press **Escape**.
-6. WA-HQ-PTT converts the audio locally and sends it automatically as a normal voice message.
 
-**Cancelled recordings are discarded and never converted or sent.** The microphone stream is closed, captured data is cleared, and the interface returns to idle.
+Cancelled recordings are discarded locally and are never converted or sent.
 
-The destination chat is captured when recording starts. This helps prevent an accidental send to a different chat if the UI changes during recording.
+The destination chat is captured when recording starts to reduce the risk of sending a finished recording to a different chat after a UI change.
 
-## FAQ
+## How to confirm HQ mode is active
 
-### Why does my microphone sound good in Windows but bad in WhatsApp Desktop?
+Before testing audio quality, verify that the custom WA-HQ-PTT recording behavior appears when you click the microphone:
 
-Different applications can use different capture, processing and encoding paths. On some Windows configurations, the WhatsApp Desktop voice-message recorder produces a more muffled, compressed or crackly result than the same microphone in other applications. WA-HQ-PTT is intended for that specific situation.
+- the WA-HQ-PTT recording status appears;
+- the custom cancel/trash control appears;
+- pressing Escape cancels the recording;
+- after stopping, the helper briefly shows local encoding/sending status.
 
-### How do I fix muffled WhatsApp Desktop voice messages?
+If the normal WhatsApp recorder appears instead, the helper is not attached. See [Troubleshooting](docs/TROUBLESHOOTING.md).
 
-WA-HQ-PTT records the microphone locally, converts the clean recording to AAC/M4A with FFmpeg, and sends it as a WhatsApp PTT. This avoids the native voice-message recording path that causes poor quality on some PCs.
+## Configuration
 
-### Does this improve WhatsApp Desktop microphone quality?
+Default configuration:
 
-It changes the recording and encoding pipeline used for voice messages; it does not change or repair the microphone hardware. Results still depend on the input device, Windows settings and the WhatsApp version.
+```json
+{
+  "DebugPort": 9223,
+  "RecordBitrate": 128000,
+  "AacBitrate": "192k",
+  "SampleRate": 48000,
+  "MicOverlayPaddingPx": 2,
+  "MaxRecordingBytes": 67108864
+}
+```
 
-### Does it work with USB microphones?
+`AacBitrate` remains in the configuration for backward compatibility with older installs, but the current v2.0.5 send path uses canonical OGG/Opus rather than AAC/M4A.
 
-WA-HQ-PTT uses the input device available to WhatsApp's Chromium/WebView2 environment. It should work with ordinary built-in, USB and audio-interface microphones that Windows and WhatsApp can access.
+Installed configuration:
 
-### Are recordings uploaded to another server?
+```text
+%LOCALAPPDATA%\WA-HQ-PTT\config.json
+```
 
-Recording and FFmpeg conversion occur locally. WA-HQ-PTT does not intentionally upload recordings to its own server. The resulting media is handed to WhatsApp for normal message delivery.
+Technical logs:
 
-### How do I cancel a voice message?
+```text
+%LOCALAPPDATA%\WA-HQ-PTT\logs\helper.log
+%LOCALAPPDATA%\WA-HQ-PTT\logs\bootstrap.log
+```
 
-While recording, click the visible trash/cancel button or press **Escape**. The recording is immediately discarded and is not converted or sent.
+## WA-JS compatibility
 
-### Is this official WhatsApp software?
+v2.0.5 intentionally pins the tested upstream WA-JS nightly rather than automatically following the newest available build.
 
-No. WA-HQ-PTT is an unofficial community project and is not affiliated with WhatsApp or Meta.
+The installer and `AGGIORNA-WA-JS.cmd` verify the exact SHA-256 before accepting the bundle. This prevents a later upstream nightly from silently replacing the build that was validated with WA-HQ-PTT.
+
+The current pinned upstream build is:
+
+```text
+WA-JS 4.6.1-alpha.0 nightly
+Upstream commit: 744e3d809f046059744f3cee035eed2bc516d6cd
+Bundle date: 2026-09-24
+SHA-256: 624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC
+```
+
+## Commands
+
+- `INSTALLA.cmd` — install or repair WA-HQ-PTT.
+- `AVVIA.cmd` — start the installed helper.
+- `STOP.cmd` — stop the installed helper.
+- `AGGIORNA-WA-JS.cmd` — re-download and verify the pinned tested WA-JS bundle.
+- `DISINSTALLA.cmd` — remove WA-HQ-PTT and restore the backed-up registry value.
+
+The uninstaller does not delete WhatsApp chats, the WhatsApp profile or FFmpeg.
 
 ## What the installer changes
 
@@ -128,68 +193,38 @@ WA-HQ-PTT is installed for the current Windows user in:
 
 The installer:
 
-- copies only the helper's runtime files;
-- downloads the tested `@wppconnect/wa-js` v4.6.0 bundle and verifies its SHA-256 hash;
+- copies the helper runtime files;
+- downloads and verifies the pinned WA-JS bundle;
 - adds WebView2 remote-debugging arguments for `WhatsApp.Root.exe`, bound to `127.0.0.1`;
-- saves the previous registry value before its first change;
+- saves the previous registry value before the first change;
 - creates a per-user Startup shortcut for the helper.
 
 Re-running `INSTALLA.cmd` is supported. Existing user configuration and the original registry backup are preserved.
 
 The helper connects locally to WhatsApp's WebView through the Chrome DevTools Protocol. Local remote debugging is powerful: another process running as your Windows user may be able to inspect that WebView while WhatsApp is open. See [Security](docs/SECURITY.md) for the exact trade-off.
 
-## Commands
-
-- `INSTALLA.cmd` — install or repair WA-HQ-PTT
-- `AVVIA.cmd` — start the installed helper
-- `STOP.cmd` — stop the installed helper
-- `AGGIORNA-WA-JS.cmd` — re-download and verify the tested WA-JS version
-- `DISINSTALLA.cmd` — remove WA-HQ-PTT and restore the backed-up registry value
-
-The uninstaller does not delete WhatsApp, chats, WhatsApp cache or the WhatsApp user profile. FFmpeg is intentionally left installed because other applications may use it.
-
-## Configuration and logs
-
-Runtime configuration:
-
-```text
-%LOCALAPPDATA%\WA-HQ-PTT\config.json
-```
-
-Technical log:
-
-```text
-%LOCALAPPDATA%\WA-HQ-PTT\logs\helper.log
-```
-
-The default audio settings are WebM/Opus at 128 kbps followed by AAC/M4A at 192 kbps and 48 kHz. Technical logs rotate locally and are not part of the repository or release archive.
-
-For microphone permissions, FFmpeg, WA-JS, active-chat, conversion, sending and compatibility errors, see [Troubleshooting](docs/TROUBLESHOOTING.md).
-
 ## Privacy
 
-- Microphone recording occurs locally in the WhatsApp WebView.
+- Microphone capture occurs locally in the WhatsApp WebView.
 - Temporary recordings are processed locally.
 - FFmpeg conversion occurs locally.
 - WA-HQ-PTT does not intentionally upload recordings to its own server.
-- The final media is handed to WhatsApp for normal message delivery.
+- The final media is handed to WhatsApp for normal delivery.
 - Temporary helper-created media is cleaned after processing or cancellation.
 
-During installation or repair, the helper downloads WA-JS from the pinned public npm package through a CDN. Normal WhatsApp message delivery remains subject to WhatsApp's own privacy practices and terms.
+Normal WhatsApp message delivery remains subject to WhatsApp's own privacy practices and terms.
 
 ## Third-party software
 
-WA-HQ-PTT uses [@wppconnect/wa-js](https://github.com/wppconnect-team/wa-js), maintained by the WPPConnect team. WA-JS was not created by DNA3301. Version 4.6.0 is pinned for this release and remains subject to its Apache-2.0 license.
+WA-HQ-PTT uses [@wppconnect/wa-js](https://github.com/wppconnect-team/wa-js), maintained by the WPPConnect team. WA-JS was not created by DNA3301 and remains subject to its own Apache-2.0 license.
 
-WA-HQ-PTT also invokes [FFmpeg](https://ffmpeg.org/) for local conversion. FFmpeg and its installed build remain subject to their own licenses. No WA-JS or FFmpeg binary is committed to this repository.
+WA-HQ-PTT also invokes [FFmpeg](https://ffmpeg.org/) for local conversion. FFmpeg remains subject to its own applicable license.
 
 See [Third-party notices](docs/THIRD_PARTY_NOTICES.md).
 
 ## Support / Donations
 
-WA-HQ-PTT is free and open source.
-
-If WA-HQ-PTT fixed your WhatsApp Desktop voice-message quality and you'd like to support development, donations are completely optional.
+WA-HQ-PTT is free and open source. Donations are optional and never unlock features.
 
 EVM-compatible wallet:
 
@@ -197,36 +232,24 @@ EVM-compatible wallet:
 0x9FAA94cE4eD7A2d38F45D711694C6EC2E49ad99a
 ```
 
-Only send assets using an EVM-compatible network supported by your wallet. Always verify network compatibility before sending funds. Donations are never required to download, install or use any feature.
+Only send assets using an EVM-compatible network supported by your wallet. Always verify network compatibility before sending funds.
 
 ## Disclaimer
 
-WA-HQ-PTT is an unofficial community project.
+WA-HQ-PTT is an unofficial community project. It is not affiliated with, endorsed by or sponsored by WhatsApp or Meta.
 
-It is not affiliated with, endorsed by, or sponsored by WhatsApp or Meta.
-
-WhatsApp Desktop/Web internals may change at any time and future updates may temporarily break compatibility.
-
-Users use the software at their own risk.
+WhatsApp Desktop/Web internals may change at any time and a future update may temporarily break compatibility.
 
 ## License
 
-Original WA-HQ-PTT code is released under the [MIT License](LICENSE), copyright 2026 DNA3301. Third-party software remains under its respective license and is not relicensed as part of WA-HQ-PTT.
+Original WA-HQ-PTT code is released under the [MIT License](LICENSE), copyright 2026 DNA3301. Third-party software remains under its respective license.
 
 ---
 
 ## Italiano
 
-WA-HQ-PTT è un workaround gratuito e open source per chi sente i vocali WhatsApp Desktop su PC molto più ovattati, compressi o gracchianti rispetto allo stesso microfono usato in altre applicazioni. Usa il normale pulsante del microfono, registra e converte localmente e invia automaticamente un vero messaggio vocale/PTT.
+WA-HQ-PTT è un workaround gratuito e open source per chi sente i vocali WhatsApp Desktop su PC molto più ovattati, compressi o gracchianti rispetto allo stesso microfono usato in altre applicazioni.
 
-### Perché il microfono su WhatsApp Desktop si sente ovattato?
+La v2.0.5 mantiene la registrazione HQ a 128 kbps e usa OGG/Opus 48 kHz mono per l'invio PTT. La compatibilità iPhone è stata risolta mantenendo intatta la qualità audio e aggiornando il livello WA-JS usato per preparare e inviare il media.
 
-Su alcune configurazioni Windows, il percorso usato dal registratore dei vocali può produrre un risultato diverso e più compresso rispetto ad altre applicazioni. Il problema non riguarda necessariamente tutti gli utenti.
-
-### Come migliorare la qualità dei vocali WhatsApp su PC?
-
-Installa WA-HQ-PTT, riavvia completamente WhatsApp Desktop e usa il normale pulsante microfono. Il programma usa una registrazione locale pulita e la converte automaticamente prima dell'invio.
-
-### Posso annullare un vocale?
-
-Sì. Durante la registrazione, premi il pulsante cestino/annulla oppure **Esc**. Il vocale annullato viene eliminato e non viene convertito né inviato.
+Per verificare che sia attivo il percorso HQ, durante la registrazione devono comparire l'indicatore WA-HQ-PTT e il pulsante cestino/annulla. Se parte il registratore standard di WhatsApp, consulta la guida di troubleshooting.
