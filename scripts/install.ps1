@@ -78,7 +78,7 @@ function Merge-DefaultConfig([string]$DefaultPath, [string]$UserPath) {
 
 try {
     Write-Host ""
-    Write-Host "WA-HQ-PTT v2.0.1 - INSTALLATION"
+    Write-Host "WA-HQ-PTT v2.0.5 - INSTALLATION"
     Write-Host "================================"
     Write-Host ""
 
