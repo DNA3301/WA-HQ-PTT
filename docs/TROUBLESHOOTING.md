@@ -1,32 +1,34 @@
 # Troubleshooting
 
-Start by completely quitting WhatsApp Desktop, running `AVVIA.cmd`, reopening WhatsApp, and waiting 5–10 seconds.
+Start by completely quitting WhatsApp Desktop, including the tray process, running `AVVIA.cmd`, reopening WhatsApp, and waiting 5–10 seconds.
 
-The local technical log is stored at:
+Technical logs are stored at:
 
 ```text
 %LOCALAPPDATA%\WA-HQ-PTT\logs\helper.log
+%LOCALAPPDATA%\WA-HQ-PTT\logs\bootstrap.log
 ```
 
 Logs are intentionally concise. They may contain local file paths and diagnostic details, so review them before sharing publicly.
 
-## The normal WhatsApp recorder starts
+## The normal WhatsApp recorder starts instead of HQ mode
 
 The helper has not attached to the current WhatsApp WebView, or a WhatsApp update changed the microphone UI.
 
 1. Completely quit WhatsApp.
 2. Run `STOP.cmd`, then `AVVIA.cmd`.
 3. Reopen WhatsApp and wait 5–10 seconds.
-4. Check `helper.log` for `WA HQ UI injected`.
-5. Run `INSTALLA.cmd` again to repair the local installation.
+4. Confirm the WA-HQ-PTT recording status and cancel/trash control appear when you click the microphone.
+5. Check `helper.log` for `WA HQ UI injected`.
+6. Run `INSTALLA.cmd` again to repair the local installation.
 
-If the log reports that WA-JS did not load or expose `WPP`, the installed WhatsApp build may be temporarily incompatible.
+If the normal WhatsApp recorder appears, do not use that recording as an HQ quality test: the custom WA-HQ-PTT path is not active.
 
 ## Cancelling a recording
 
-While the red recording indicator is visible, click the trash/cancel button or press **Escape**. The microphone stream is stopped, captured audio is discarded, and nothing is converted or sent.
+While the WA-HQ-PTT recording indicator is visible, click the trash/cancel button or press **Escape**. The microphone stream is stopped, captured audio is discarded, and nothing is converted or sent.
 
-If the cancel control is not visible, completely restart WhatsApp and confirm that the installed `ui.js` reports version 2.0.1 in the helper log.
+If the cancel control is not visible, completely restart WhatsApp and verify that `WA HQ UI injected` appears in `helper.log`.
 
 ## Microphone permission denied
 
@@ -44,15 +46,58 @@ If `winget` is unavailable, install FFmpeg manually, ensure `ffmpeg.exe` is on `
 
 ## WA-JS missing or failed integrity verification
 
-Run `AGGIORNA-WA-JS.cmd`. Version 4.6.0 is downloaded from pinned CDN URLs and verified against the SHA-256 value recorded in the scripts. A failed hash check is rejected rather than installed.
+Run `AGGIORNA-WA-JS.cmd`.
+
+v2.0.5 pins the tested WA-JS nightly generated on 2026-09-24 from upstream commit:
+
+```text
+744e3d809f046059744f3cee035eed2bc516d6cd
+```
+
+Expected bundle SHA-256:
+
+```text
+624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC
+```
+
+A failed hash check is rejected rather than installed.
 
 ## Conversion failed
 
-Confirm that `ffmpeg -version` works, then check `helper.log`. Temporary input/output files are removed after the failed attempt.
+Confirm that `ffmpeg -version` works, then check `helper.log`. v2.0.5 encodes the outgoing PTT as canonical OGG/Opus at 48 kHz mono, 20 ms frames, with a 128 kbps default bitrate. Temporary files are removed after processing or failure.
+
+## Audio quality became poor again
+
+First confirm that the WA-HQ-PTT overlay and cancel control appear while recording. If they do not, WhatsApp's normal recorder is being used instead of the HQ path.
+
+The validated v2.0.5 profile is:
+
+```text
+OGG/Opus
+48 kHz
+mono
+20 ms frames
+128 kbps default
+VBR on
+Opus application=audio
+waveform enabled
+```
+
+Do not intentionally switch the output to the superseded v2.0.4 experimental 64 kbps / `application=voip` profile if the goal is to preserve the tested HQ quality.
+
+## Voice message is audible on Android but silent on iPhone
+
+This was the main compatibility issue fixed by v2.0.5. Re-run `INSTALLA.cmd` and `AGGIORNA-WA-JS.cmd`, completely restart WhatsApp Desktop, then confirm the pinned WA-JS bundle hash matches the value above.
+
+If the problem returns after a future WhatsApp update, include `helper.log` and `bootstrap.log` when reporting it.
+
+## Playback-speed button changes but playback does not speed up
+
+v2.0.5 sends PTT as OGG/Opus rather than the older AAC/M4A compatibility path. Reinstall the current version and confirm the HQ path is active before retesting 1x / 1.5x / 2x on the recipient device.
 
 ## Sending failed
 
-Check the network connection and try again in the same chat. If failures began immediately after a WhatsApp update, WA-JS or WhatsApp internals may have changed. Check this repository for a newer release.
+Check the network connection and try again in the same chat. If failures began immediately after a WhatsApp update, WA-JS or WhatsApp internals may have changed. Check this repository for a newer compatibility update.
 
 ## Uninstall
 
