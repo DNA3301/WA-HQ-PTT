@@ -8,17 +8,15 @@ $WajsPath = Join-Path $AppDir "wppconnect-wa.js"
 $WajsLicensePath = Join-Path $AppDir "wppconnect-wa.js.LICENSE.txt"
 $TempPath = "$WajsPath.download"
 $TempLicensePath = "$WajsLicensePath.download"
-$WajsVersion = "4.6.0"
-$ExpectedSha256 = "5BFB88027F14A4D8C9E319374E8BB4083201906881CF8C74F75789B32E4106BD"
+$WajsVersion = "4.6.1-alpha.0-nightly-2026-09-24"
+$ExpectedSha256 = "624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC"
 
 $BundleUrls = @(
-    "https://cdn.jsdelivr.net/npm/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js",
-    "https://unpkg.com/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js"
+    "https://github.com/wppconnect-team/wa-js/releases/download/nightly/wppconnect-wa.js"
 )
 
 $LicenseUrls = @(
-    "https://cdn.jsdelivr.net/npm/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js.LICENSE.txt",
-    "https://unpkg.com/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js.LICENSE.txt"
+    "https://raw.githubusercontent.com/wppconnect-team/wa-js/744e3d809f046059744f3cee035eed2bc516d6cd/LICENSE"
 )
 
 function Get-Sha256([string]$Path) {
@@ -35,12 +33,7 @@ function Get-Sha256([string]$Path) {
 function Test-WajsBundle([string]$Path) {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $false }
     if ((Get-Item -LiteralPath $Path).Length -lt 100000) { return $false }
-
-    $actualHash = Get-Sha256 $Path
-    if ($actualHash -ne $ExpectedSha256) { return $false }
-
-    $contents = [System.IO.File]::ReadAllText($Path, [System.Text.Encoding]::UTF8)
-    return $contents.StartsWith("/*! For license information") -and $contents.Contains("wppconnect-team/wa-js v$WajsVersion")
+    return (Get-Sha256 $Path) -eq $ExpectedSha256
 }
 
 function Download-TestedWajs {
@@ -50,10 +43,10 @@ function Download-TestedWajs {
     $downloaded = $false
     foreach ($url in $BundleUrls) {
         try {
-            Write-Host "Downloading WA-JS v$WajsVersion from $url"
+            Write-Host "Downloading pinned WA-JS $WajsVersion from $url"
             Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $TempPath -TimeoutSec 45
             if (-not (Test-WajsBundle $TempPath)) {
-                throw "The downloaded bundle failed its version or SHA-256 verification."
+                throw "The downloaded bundle failed SHA-256 verification."
             }
 
             Move-Item -LiteralPath $TempPath -Destination $WajsPath -Force
@@ -66,7 +59,7 @@ function Download-TestedWajs {
     }
 
     if (-not $downloaded) {
-        throw "Unable to download and verify the tested WA-JS v$WajsVersion bundle. Check the internet connection and try again."
+        throw "Unable to download and verify the tested WA-JS bundle. Check the internet connection and try again."
     }
 
     Remove-Item -LiteralPath $TempLicensePath -Force -ErrorAction SilentlyContinue
@@ -82,7 +75,7 @@ function Download-TestedWajs {
         }
     }
 
-    Write-Host "WA-JS v$WajsVersion installed and SHA-256 verified."
+    Write-Host "WA-JS $WajsVersion installed and SHA-256 verified."
 }
 
 try {
