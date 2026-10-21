@@ -46,18 +46,12 @@ If `winget` is unavailable, install FFmpeg manually, ensure `ffmpeg.exe` is on `
 
 ## WA-JS missing or failed integrity verification
 
-Run `AGGIORNA-WA-JS.cmd`.
-
-v2.0.5 pins the tested WA-JS nightly generated on 2026-09-24 from upstream commit:
-
-```text
-744e3d809f046059744f3cee035eed2bc516d6cd
-```
+The current source pins WA-JS 4.7.1. Reinstall from the [current main ZIP](https://github.com/DNA3301/WA-HQ-PTT/archive/refs/heads/main.zip), then use `AGGIORNA-WA-JS.cmd` for later repairs. An updater copied from an older release still pins that older bundle.
 
 Expected bundle SHA-256:
 
 ```text
-624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC
+ED4CC6B17CE18D726B0BD89C0B30021C5B8266F823F13509C08170B7ACE96126
 ```
 
 A failed hash check is rejected rather than installed.
@@ -96,6 +90,12 @@ If the problem returns after a future WhatsApp update, include `helper.log` and 
 v2.0.5 sends PTT as OGG/Opus rather than the older AAC/M4A compatibility path. Reinstall the current version and confirm the HQ path is active before retesting 1x / 1.5x / 2x on the recipient device.
 
 ## Sending failed
+
+If `helper.log` shows `Cannot read properties of undefined (reading 'prepRawMedia')`, recording and FFmpeg conversion may already have completed successfully. A WhatsApp update split the internal media-preparation modules used by the old WA-JS bundle.
+
+WA-JS 4.7.1 includes the [upstream fix](https://github.com/wppconnect-team/wa-js/pull/3732). Update using the [current main ZIP](https://github.com/DNA3301/WA-HQ-PTT/archive/refs/heads/main.zip), or use the [targeted compatibility patch](../patches/media-prep-2026-10-21/LEGGIMI.txt) for an existing v2.0.2 runtime. The patch backs up the replaced files, updates both bootstrap and updater, and preserves the HQ audio profile. `RIPRISTINA.cmd` restores the backup.
+
+Completely quit WhatsApp Desktop, including its tray process, then reopen it. Restarting only the helper leaves the old WA-JS object in the already-open WebView.
 
 Check the network connection and try again in the same chat. If failures began immediately after a WhatsApp update, WA-JS or WhatsApp internals may have changed. Check this repository for a newer compatibility update.
 

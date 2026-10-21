@@ -48,7 +48,7 @@
           <p class="eyebrow">v2.0.5 · Free · Open source · Windows</p>
           <h1>Fix Poor WhatsApp Desktop Voice Message Quality on Windows</h1>
           <p class="lead">Keep the normal WhatsApp microphone workflow while replacing the degraded recording path with a local HQ OGG/Opus pipeline.</p>
-          <p>v2.0.5 preserves the 128 kbps HQ profile and fixes the iPhone silent-playback compatibility issue without sacrificing Android audio quality.</p>
+          <p>v2.0.5 preserves the 128 kbps HQ profile. Current source also includes the October 21 WA-JS 4.7.1 fix for Send failed / prepRawMedia on WhatsApp Beta.</p>
           <div class="actions">
             <a class="button primary" href="https://github.com/DNA3301/WA-HQ-PTT/archive/refs/heads/main.zip">Download v2.0.5</a>
             <a class="button secondary" href="https://github.com/DNA3301/WA-HQ-PTT">View on GitHub</a>
@@ -73,10 +73,10 @@
           <div><strong>Clean local capture</strong><span>Echo cancellation / noise suppression / AGC requested off</span></div><b aria-hidden="true">↓</b>
           <div><strong>WebM / Opus</strong><span>HQ temporary recording</span></div><b aria-hidden="true">↓</b>
           <div><strong>FFmpeg OGG / Opus</strong><span>48 kHz mono · 20 ms · 128 kbps default</span></div><b aria-hidden="true">↓</b>
-          <div><strong>Pinned WA-JS</strong><span>Validated 2026-09-24 nightly</span></div><b aria-hidden="true">↓</b>
+          <div><strong>Pinned WA-JS</strong><span>Stable 4.7.1 · MediaPrep fix</span></div><b aria-hidden="true">↓</b>
           <div><strong>WhatsApp PTT</strong><span>Android + iPhone compatible</span></div>
         </div>
-        <p class="fine-print">The pinned WA-JS bundle is integrity-checked with SHA-256. The current tested upstream commit is <code>744e3d809f046059744f3cee035eed2bc516d6cd</code>.</p>
+        <p class="fine-print">The pinned WA-JS 4.7.1 bundle is integrity-checked with SHA-256 and includes the fix for WhatsApp's split media-preparation modules.</p>
       </div>
     </section>
 
@@ -110,7 +110,7 @@
         <div class="usage-card">
           <h3>Validated media profile</h3>
           <p><strong>Codec:</strong> Opus in OGG</p><p><strong>Sample rate:</strong> 48 kHz</p><p><strong>Channels:</strong> mono</p><p><strong>Bitrate:</strong> 128 kbps default</p><p><strong>Frame duration:</strong> 20 ms</p><hr>
-          <p>WA-JS bundle SHA-256:<br><code>624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC</code></p>
+          <p>WA-JS bundle SHA-256:<br><code>ED4CC6B17CE18D726B0BD89C0B30021C5B8266F823F13509C08170B7ACE96126</code></p>
         </div>
       </div>
     </section>
@@ -119,7 +119,7 @@
       <p class="section-label">FAQ</p><h2>Common questions</h2>
       <details><summary>How do I know HQ mode is active?</summary><p>The WA-HQ-PTT recording status and custom cancel/trash control must appear. If the normal WhatsApp recorder appears instead, restart or repair the helper before testing quality.</p></details>
       <details><summary>Are recordings uploaded to another server?</summary><p>No project-owned audio server is used. Capture and FFmpeg conversion are local; the finished PTT is handed to WhatsApp for normal delivery.</p></details>
-      <details><summary>Why is WA-JS pinned to a nightly build?</summary><p>The 2026-09-24 nightly fixed the iPhone compatibility problem in the tested media path. The exact bundle is pinned by hash so a future nightly cannot silently replace it.</p></details>
+      <details><summary>How do I fix Send failed / prepRawMedia on WhatsApp Beta?</summary><p>Download the current source ZIP, run INSTALLA.cmd, then completely quit and reopen WhatsApp. Current source pins WA-JS 4.7.1 with the media-preparation fix; the HQ audio profile is preserved.</p></details>
       <details><summary>Is this official WhatsApp software?</summary><p>No. WA-HQ-PTT is an unofficial community project and is not affiliated with WhatsApp or Meta.</p></details>
     </div></section>
 

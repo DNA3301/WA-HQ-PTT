@@ -91,14 +91,11 @@ try {
 
     $core = [System.IO.File]::ReadAllText($CorePath, [System.Text.Encoding]::UTF8)
 
-    # iOS isolation test: only swap the injected WA-JS engine. Recorder, overlay,
-    # FFmpeg profile, bitrate and send options below remain identical to the
-    # restored Android-good HQ build.
-    $core = Replace-Once $core '$WajsVersion = "4.6.0"' '$WajsVersion = "4.6.1-alpha.0-nightly-2026-09-24"' "wajs-nightly-version"
-    $core = Replace-Once $core '$ExpectedWajsSha256 = "5BFB88027F14A4D8C9E319374E8BB4083201906881CF8C74F75789B32E4106BD"' '$ExpectedWajsSha256 = "624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC"' "wajs-nightly-sha"
-    $core = Replace-Once $core '"https://cdn.jsdelivr.net/npm/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js",' '"https://github.com/wppconnect-team/wa-js/releases/download/nightly/wppconnect-wa.js",' "wajs-nightly-url-primary"
-    $core = Replace-Once $core '"https://unpkg.com/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js"' '"https://github.com/wppconnect-team/wa-js/releases/download/nightly/wppconnect-wa.js"' "wajs-nightly-url-fallback"
-    Write-BootstrapLog "iOS isolation test: WA-JS nightly 2026-09-24 SHA-256 pinned; HQ audio/UI unchanged"
+    # Compatibility fix: media-prep-4.7.1-20261021
+    # WhatsApp split prepRawMedia into a separate module; WA-JS 4.7.1 handles it.
+    $core = Replace-Once $core '$WajsVersion = "4.6.0"' '$WajsVersion = "4.7.1"' "wajs-version"
+    $core = Replace-Once $core '$ExpectedWajsSha256 = "5BFB88027F14A4D8C9E319374E8BB4083201906881CF8C74F75789B32E4106BD"' '$ExpectedWajsSha256 = "ED4CC6B17CE18D726B0BD89C0B30021C5B8266F823F13509C08170B7ACE96126"' "wajs-sha256"
+    Write-BootstrapLog "MediaPrep fix: WA-JS 4.7.1 SHA-256 pinned; existing HQ audio/UI retained"
 
     $core = Replace-Once $core '@(".webm", ".m4a")' '@(".webm", ".ogg", ".m4a")' "stale-temp-extensions"
 
@@ -178,7 +175,7 @@ function Convert-And-Send($Upload) {
     $core = Replace-Once $core 'Remove-Item $webm, $m4a -Force -ErrorAction SilentlyContinue' 'Remove-Item $webm, $ogg -Force -ErrorAction SilentlyContinue' "ogg-temp-remove"
     $core = Replace-Once $core 'OggPath = $m4a' 'OggPath = $ogg' "ogg-upload-property"
 
-    Write-BootstrapLog "Starting HQ runtime with isolated WA-JS nightly iOS test (128k default, 48 kHz mono)"
+    Write-BootstrapLog "Starting HQ runtime with WA-JS 4.7.1 (existing HQ Opus profile)"
     & ([ScriptBlock]::Create($core))
 } catch {
     Write-BootstrapLog "FATAL: $($_.Exception.Message)"

@@ -6,14 +6,14 @@ WA-HQ-PTT's MIT license applies only to the original code in this repository.
 
 - Project: `@wppconnect/wa-js`
 - Upstream: https://github.com/wppconnect-team/wa-js
-- Version used by WA-HQ-PTT v2.0.5: `4.6.1-alpha.0` nightly generated 2026-09-24
-- Upstream commit: `744e3d809f046059744f3cee035eed2bc516d6cd`
-- Pinned bundle SHA-256: `624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC`
+- Version used by current `main`: `4.7.1`
+- Upstream release: https://github.com/wppconnect-team/wa-js/releases/tag/v4.7.1
+- Pinned bundle SHA-256: `ED4CC6B17CE18D726B0BD89C0B30021C5B8266F823F13509C08170B7ACE96126`
 - License declared by the project/package: Apache-2.0
 
 WA-JS is maintained by the WPPConnect team and was not developed by DNA3301. Its JavaScript bundle is downloaded during installation and is not committed to this repository or bundled into the source ZIP.
 
-The exact tested nightly is intentionally integrity-pinned so a later upstream nightly cannot silently replace the build validated with WA-HQ-PTT.
+The exact stable release is intentionally integrity-pinned. The original v2.0.5 release used the 2026-09-24 nightly; the October compatibility fix updates both the bootstrap and updater to 4.7.1.
 
 ## FFmpeg
 

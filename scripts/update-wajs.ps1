@@ -8,15 +8,18 @@ $WajsPath = Join-Path $AppDir "wppconnect-wa.js"
 $WajsLicensePath = Join-Path $AppDir "wppconnect-wa.js.LICENSE.txt"
 $TempPath = "$WajsPath.download"
 $TempLicensePath = "$WajsLicensePath.download"
-$WajsVersion = "4.6.1-alpha.0-nightly-2026-09-24"
-$ExpectedSha256 = "624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC"
+$WajsVersion = "4.7.1"
+$ExpectedSha256 = "ED4CC6B17CE18D726B0BD89C0B30021C5B8266F823F13509C08170B7ACE96126"
 
 $BundleUrls = @(
-    "https://github.com/wppconnect-team/wa-js/releases/download/nightly/wppconnect-wa.js"
+    "https://github.com/wppconnect-team/wa-js/releases/download/v$WajsVersion/wppconnect-wa.js",
+    "https://cdn.jsdelivr.net/npm/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js",
+    "https://unpkg.com/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js"
 )
 
 $LicenseUrls = @(
-    "https://raw.githubusercontent.com/wppconnect-team/wa-js/744e3d809f046059744f3cee035eed2bc516d6cd/LICENSE"
+    "https://cdn.jsdelivr.net/npm/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js.LICENSE.txt",
+    "https://unpkg.com/@wppconnect/wa-js@$WajsVersion/dist/wppconnect-wa.js.LICENSE.txt"
 )
 
 function Get-Sha256([string]$Path) {

@@ -1,0 +1,62 @@
+WA-HQ-PTT - correzione Send failed / prepRawMedia
+21 ottobre 2026
+
+PER APPLICARLA
+1. Estrai completamente lo ZIP.
+2. Chiudi WhatsApp Beta, poi esegui APPLICA-FIX.cmd
+   (non serve avviare come amministratore).
+3. Chiudi COMPLETAMENTE WhatsApp Beta e riaprilo.
+4. Prova il normale pulsante microfono.
+
+La correzione e' destinata al runtime WA-HQ-PTT 2.0.2 (distribuito anche
+con v2.0.5), con start.ps1 bootstrap e start.core.ps1. Sono supportati gli
+updater 4.6.0 e nightly 2026-09-24. Se i file non corrispondono alla
+struttura prevista, la patch si ferma senza sostituirli.
+
+COSA CORREGGE
+WhatsApp ha spostato prepRawMedia in un modulo separato. La vecchia WA-JS
+4.6.1-alpha.0 non lo trova e l'invio fallisce dopo la conversione audio.
+Questa patch scarica WA-JS 4.7.1 ufficiale, ne verifica SHA-256, aggiorna il
+bootstrap e l'updater in modo che non ripristinino la vecchia versione.
+Serve una connessione Internet per il download.
+
+Sono preservati ui.js, start.core.ps1, registrazione HQ, formato OGG/Opus,
+48 kHz, bitrate, cancellazione, configurazione e dati di WhatsApp.
+La patch non invia messaggi di prova e non legge chat o credenziali.
+Non modifica registro, autostart o profili browser.
+
+BACKUP / RIPRISTINO
+Prima delle modifiche salva i quattro file sostituiti in:
+%LOCALAPPDATA%\WA-HQ-PTT\compat-backups\media-prep-4.7.1-20261021
+Rieseguire APPLICA-FIX.cmd e' supportato e non sovrascrive il backup originale.
+Per annullare la patch esegui RIPRISTINA.cmd, poi riavvia completamente WhatsApp.
+
+VERIFICA SENZA APPLICARE
+Da PowerShell, nella cartella estratta:
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\Correggi-WAJS.ps1 -CheckOnly
+
+WA-JS 4.7.1 e' software del WPPConnect Team, non di DNA3301.
+Upstream: https://github.com/wppconnect-team/wa-js
+Correzione: https://github.com/wppconnect-team/wa-js/pull/3732
+Release: https://github.com/wppconnect-team/wa-js/releases/tag/v4.7.1
+WA-JS resta soggetta alla licenza Apache-2.0 e alle proprie licenze di terzi.
+Il bundle e gli avvisi di licenza sono scaricati dalle fonti ufficiali;
+non sono incorporati in questo archivio.
+
+SHA-256 bundle WA-JS 4.7.1:
+ED4CC6B17CE18D726B0BD89C0B30021C5B8266F823F13509C08170B7ACE96126
+
+WA-HQ-PTT e' un progetto non ufficiale e non affiliato a WhatsApp o Meta.
+Questa patch risolve l'incompatibilita' MediaPrep identificata il 21/10/2026;
+ulteriori aggiornamenti di WhatsApp possono richiedere nuove correzioni.
+
+VERIFICHE ESEGUITE
+- Sintassi Windows PowerShell 5.1 e JavaScript del bundle ufficiale.
+- Applicazione su copia isolata dei file installati.
+- Integrita' del download confrontata con la release ufficiale.
+- Seconda applicazione senza modificare il backup originale.
+- Ripristino con SHA-256 identici ai file originali.
+- ui.js, start.core.ps1 e funzione FFmpeg effettiva invariati.
+- Rifiuto di versioni runtime non riconosciute.
+L'invio reale e' stato confermato sull'installazione WhatsApp Beta interessata.
+Dopo l'applicazione, riavvia completamente WhatsApp e verifica un vocale.

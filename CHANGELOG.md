@@ -2,6 +2,14 @@
 
 All notable changes to WA-HQ-PTT are documented here.
 
+## Unreleased - 2026-10-21
+
+- Fixed `Send failed` / `Cannot read properties of undefined (reading 'prepRawMedia')` after WhatsApp split its internal media-preparation modules.
+- Pinned WA-JS 4.7.1 and its official SHA-256 in both the runtime bootstrap and updater.
+- Replaced the moving nightly download URL with versioned release/CDN URLs.
+- Preserved the validated HQ OGG/Opus profile, microphone overlay, cancellation controls, and existing configuration.
+- Added a backup/restore compatibility patch for existing installations; successful voice-message sending was confirmed on the affected WhatsApp Beta installation.
+
 ## v2.0.5 - 2026-09-27
 
 - Promoted the Android + iOS compatible HQ pipeline after successful real-device verification.

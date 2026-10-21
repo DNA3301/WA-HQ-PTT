@@ -10,13 +10,19 @@ The project keeps the familiar WhatsApp voice-message workflow while replacing t
 
 [Download current v2.0.5 source ZIP](https://github.com/DNA3301/WA-HQ-PTT/archive/refs/heads/main.zip) · [Project website](https://dna3301.github.io/WA-HQ-PTT/) · [Repository](https://github.com/DNA3301/WA-HQ-PTT)
 
+### October 21 compatibility fix: Send failed / prepRawMedia
+
+Current `main` pins **WA-JS 4.7.1** to fix media sending after WhatsApp moved `prepRawMedia` into a separate module. Successful voice-message sending was confirmed on the affected WhatsApp Beta installation. The HQ audio profile is unchanged.
+
+Existing users can either reinstall from the [current main ZIP](https://github.com/DNA3301/WA-HQ-PTT/archive/refs/heads/main.zip) or use the [targeted backup/restore patch](patches/media-prep-2026-10-21/LEGGIMI.txt) for the v2.0.2 runtime included in v2.0.5. Completely quit and reopen WhatsApp after applying the fix. Previously downloaded release archives do not contain this update.
+
 ## What is fixed in v2.0.5
 
 - HQ recording remains active on Android recipients instead of falling back to WhatsApp's lower-quality native recording path.
 - Voice notes are sent as canonical OGG/Opus PTT media at 48 kHz mono with a 128 kbps default bitrate.
 - Recipient playback-speed controls remain usable at 1x / 1.5x / 2x.
 - Silent playback on WhatsApp for iOS was fixed by moving the compatibility change to the WA-JS media layer instead of degrading the audio profile.
-- The validated WA-JS nightly build from 2026-09-24 is pinned by SHA-256.
+- The original release used a validated WA-JS nightly; current `main` pins stable WA-JS 4.7.1 with the October media-preparation compatibility fix.
 
 The final v2.0.5 path was verified on real Android and iPhone recipients before being promoted to `main`.
 
@@ -70,12 +76,12 @@ WPP.chat.sendFileMessage(chatId, file, {
 })
 ```
 
-The current compatibility build uses the WA-JS nightly generated on 2026-09-24 from upstream commit `744e3d809f046059744f3cee035eed2bc516d6cd`.
+The current compatibility build uses [WA-JS 4.7.1](https://github.com/wppconnect-team/wa-js/releases/tag/v4.7.1), which resolves the split media-preparation modules introduced by a WhatsApp update.
 
 Pinned bundle SHA-256:
 
 ```text
-624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC
+ED4CC6B17CE18D726B0BD89C0B30021C5B8266F823F13509C08170B7ACE96126
 ```
 
 ## Installation
@@ -160,17 +166,16 @@ Technical logs:
 
 ## WA-JS compatibility
 
-v2.0.5 intentionally pins the tested upstream WA-JS nightly rather than automatically following the newest available build.
+Current `main` intentionally pins the tested upstream WA-JS 4.7.1 release rather than automatically following the newest available build.
 
-The installer and `AGGIORNA-WA-JS.cmd` verify the exact SHA-256 before accepting the bundle. This prevents a later upstream nightly from silently replacing the build that was validated with WA-HQ-PTT.
+The installer and `AGGIORNA-WA-JS.cmd` verify the exact SHA-256 before accepting the bundle. Both the bootstrap and updater use the same version pin, so restarting the helper cannot silently restore the old incompatible nightly.
 
 The current pinned upstream build is:
 
 ```text
-WA-JS 4.6.1-alpha.0 nightly
-Upstream commit: 744e3d809f046059744f3cee035eed2bc516d6cd
-Bundle date: 2026-09-24
-SHA-256: 624F910B6A360C8B34C8962C82826E5539765F4AC0BA427D351D224DE29BFDEC
+WA-JS 4.7.1
+Upstream release: https://github.com/wppconnect-team/wa-js/releases/tag/v4.7.1
+SHA-256: ED4CC6B17CE18D726B0BD89C0B30021C5B8266F823F13509C08170B7ACE96126
 ```
 
 ## Commands

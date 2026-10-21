@@ -10,7 +10,7 @@ Remote debugging is nevertheless a powerful capability. Another process running 
 
 The repository and release ZIP do not bundle WA-JS or FFmpeg binaries.
 
-- WA-JS v4.6.0 is downloaded over HTTPS from pinned npm CDN paths and checked against a pinned SHA-256 digest before installation.
+- WA-JS v4.7.1 is downloaded over HTTPS from versioned upstream release/CDN paths and checked against a pinned SHA-256 digest before installation.
 - FFmpeg is discovered locally or installed through the `Gyan.FFmpeg` winget package.
 
 ## Data handling
